@@ -49,7 +49,12 @@ public:
 		write_messages_.push_back(message);
 
 		if (!write_in_progress) {
+			do_write();
 		}
+	}
+
+	void do_write() {
+
 	}
 
 private:
@@ -60,5 +65,11 @@ private:
 };
 
 class server {
+public:
+	server(boost::asio::io_context& io_context, const boost::asio::ip::tcp::endpoint& endpoint) : io_context_(io_context), acceptor_(io_context, endpoint) { }
 
+private:
+	boost::asio::io_context& io_context_;
+	boost::asio::ip::tcp::acceptor acceptor_;
+	room room_;
 };
