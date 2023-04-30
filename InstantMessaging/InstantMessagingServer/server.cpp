@@ -21,12 +21,25 @@ void room::leave(std::shared_ptr<session> user) {
 
 void room::deliver(const message& message) {
 	for (auto user : users_) {
-		user->deliver(message);
+		if (user->username_picked)
+		{
+			user->deliver(message);
+		}
 	}
 }
 
 void session::start() {
+	ask_for_username();
 	room_.join(shared_from_this());
+
+	do_read();
+}
+
+void session::ask_for_username() {
+	message username;
+	std::string username_msg = "Please enter a username: ";
+	std::copy(username_msg.begin(), username_msg.end(), username.msg);
+	deliver(username);
 
 	do_read();
 }
@@ -43,8 +56,15 @@ void session::deliver(const message& message) {
 void session::do_read() {
 	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec, size_t read_bytes) {
 		if (!ec) {
-			room_.deliver(read_message_);
-			do_read();
+			if (username_picked)
+			{
+				room_.deliver(read_message_);
+				do_read();
+			}
+			else {
+				username = std::string(read_message_.msg);
+				username_picked = true;
+			}
 		}
 		else {
 			room_.leave(shared_from_this());
