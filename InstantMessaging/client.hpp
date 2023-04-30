@@ -45,7 +45,7 @@ public:
 	}
 
 	void close() {
-		
+		boost::asio::post(io_context_, [this]() { socket_.close(); });
 	}
 
 private:
