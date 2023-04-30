@@ -3,6 +3,7 @@
 #include "message.hpp"
 #include <boost/asio.hpp>
 #include <deque>
+#include <iostream>
 
 class client {
 public:
@@ -21,7 +22,8 @@ public:
 	void receive(const message& message) {
 		boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec) {
 			if (!ec) {
-				
+				std::cout << read_message_.msg << std::endl;
+				receive(read_message_);
 			}
 		});
 	}
