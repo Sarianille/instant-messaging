@@ -1,4 +1,5 @@
 #include "client.hpp"
+#include <cstring>
 
 void client::do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints) {
 	boost::asio::async_connect(socket_, endpoints, [this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint) {
@@ -45,13 +46,13 @@ void client::write(const message& message) {
 	}
 }
 
-void client::set_username() {
+std::string client::set_username() {
 	std::cout << "Enter username: ";
 
 	char username[message::max_username_length];
 	std::cin.getline(username, message::max_username_length);
 
-	username_ = username;
+	return username;
 }
 
 void client::close() {
@@ -78,10 +79,11 @@ int main(int argc, char* argv[]) {
 		client client(io_context, endpoints);
 		std::thread thread([&io_context]() { io_context.run(); });
 
-		client.set_username();
-
 		message message;
+		std::strcpy(message.header.username, client.set_username().c_str());
+
 		while (std::cin.getline(message.msg, message.max_length)) {
+			message.header.message_length = std::strlen(message.msg);
 			client.write(message);
 		}
 		client.close();

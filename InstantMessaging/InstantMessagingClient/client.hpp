@@ -20,7 +20,7 @@ public:
 
 	void write(const message& message);
 
-	void set_username();
+	std::string set_username();
 
 	void close();
 
@@ -29,7 +29,6 @@ private:
 	boost::asio::io_context& io_context_;
 	message read_message_;
 	std::deque<message> write_messages_;
-	std::string username_;
 
 
 };
