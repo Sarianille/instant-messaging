@@ -9,25 +9,11 @@
 
 class room {
 public:
-	void join(std::shared_ptr<session> user) {
-		users_.insert(user);
-	}
+	void join(std::shared_ptr<session> user);
 
-	void leave(std::shared_ptr<session> user) {
-		users_.erase(user);
-	}
+	void leave(std::shared_ptr<session> user);
 
-	void deliver(const message& message) {
-		recent_messages_.push_back(message);
-
-		while (recent_messages_.size() > max_recent_messages) {
-			recent_messages_.pop_front();
-		}
-
-		for (auto user : users_) {
-			user->deliver(message);
-		}
-	}
+	void deliver(const message& message);
 
 private:
 	std::unordered_set<std::shared_ptr<session>> users_; // We have one session per user, which is why we can consider them one and the same
@@ -37,49 +23,15 @@ private:
 
 class session : std::enable_shared_from_this<session> {
 public:
-	session(boost::asio::ip::tcp::socket socket, room& room) : socket_(std::move(socket)), room_(room) {
-	}
+	session(boost::asio::ip::tcp::socket socket, room& room) : socket_(std::move(socket)), room_(room) { }
 
-	void start() {
-		room_.join(shared_from_this());
+	void start();
 
-		do_read();
-	}
+	void deliver(const message& message);
 
-	void deliver(const message& message) {
-		bool write_in_progress = !write_messages_.empty();
-		write_messages_.push_back(message);
+	void do_read();
 
-		if (!write_in_progress) {
-			do_write();
-		}
-	}
-
-	void do_read() {
-		boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec) {
-			if (!ec) {
-				room_.deliver(read_message_);
-				do_read();
-			}
-			else {
-				room_.leave(shared_from_this());
-			}
-		});
-	}
-
-	void do_write() {
-		boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec) {
-			if (!ec) {
-				write_messages_.pop_front();
-				if (!write_messages_.empty()) {
-					do_write();
-				}
-			}
-			else {
-				room_.leave(shared_from_this());
-			}
-		});
-	}
+	void do_write();
 
 private:
 	boost::asio::ip::tcp::socket socket_;
@@ -95,14 +47,7 @@ public:
 		do_accept();
 	}
 
-	void do_accept() {
-		acceptor_.async_accept([this](boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
-			if (!ec) {
-				std::make_shared<session>(std::move(socket), room_)->start();
-			}
-			do_accept();
-		});
-	}
+	void do_accept();
 
 private:
 	boost::asio::io_context& io_context_;
