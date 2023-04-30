@@ -1,16 +1,19 @@
 #include "server.hpp"
 #include <iostream>
+#include <chrono>
 
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
 
 	send_announcement("A new user has joined! Welcome!");
+	log_event("A new user has joined.");
 }
 
 void room::leave(std::shared_ptr<session> user) {
 	users_.erase(user);
 
 	send_announcement("A user has left. Goodbye!");
+	log_event("A user has left.");
 }
 
 void room::deliver(const message& message, std::optional<std::shared_ptr<session>> sender) {
@@ -28,6 +31,10 @@ void room::send_announcement(std::string announcement) {
 	std::copy(name_.begin(), name_.end() + 1, announcement_message.header.username);
 	announcement_message.header.message_length = announcement.length() + 1;
 	deliver(announcement_message, std::nullopt);
+}
+
+void room::log_event(const std::string& event_message) {
+	std::cout << std::chrono::system_clock::now() << " " << event_message << std::endl;
 }
 
 void session::start() {
@@ -52,6 +59,7 @@ void session::do_read_header() {
 			do_read_body();
 		}
 		else {
+			room_.log_event("Connection with client failed.");
 			room_.leave(shared_from_this());
 		}
 		});
@@ -64,6 +72,7 @@ void session::do_read_body() {
 			do_read_header();
 		}
 		else {
+			room_.log_event("Connection with client failed.");
 			room_.leave(shared_from_this());
 		}
 		});
@@ -81,6 +90,7 @@ void session::do_write() {
 			}
 		}
 		else {
+			room_.log_event("Connection with client failed.");
 			room_.leave(shared_from_this());
 		}
 		});

@@ -7,6 +7,7 @@
 #include <memory>
 #include <deque>
 #include <optional>
+#include <string>
 
 class session;
 
@@ -19,6 +20,8 @@ public:
 	void deliver(const message& message, std::optional<std::shared_ptr<session>> sender);
 
 	void send_announcement(std::string announcement);
+
+	void log_event(const std::string& event_message);
 
 private:
 	std::unordered_set<std::shared_ptr<session>> users_; // We have one session per user, which is why we can consider them one and the same
