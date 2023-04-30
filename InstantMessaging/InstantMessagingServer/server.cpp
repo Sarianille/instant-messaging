@@ -17,6 +17,10 @@ void room::deliver(const message& message) {
 
 void session::start() {
 	room_.join(shared_from_this());
+	message welcome;
+	std::string welcome_msg = "A new user has joined! Welcome!\n";
+	std::copy(welcome_msg.begin(), welcome_msg.end(), welcome.msg);
+	deliver(welcome);
 
 	do_read();
 }
