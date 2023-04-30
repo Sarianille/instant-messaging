@@ -20,8 +20,6 @@ public:
 
 	void write(const message& message);
 
-	std::string set_username();
-
 	void close();
 
 private:

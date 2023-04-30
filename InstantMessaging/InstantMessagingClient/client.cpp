@@ -46,17 +46,17 @@ void client::write(const message& message) {
 	}
 }
 
-std::string client::set_username() {
+void client::close() {
+	boost::asio::post(io_context_, [this]() { socket_.close(); });
+}
+
+std::string set_username() {
 	std::cout << "Enter username: ";
 
 	char username[message::max_username_length];
 	std::cin.getline(username, message::max_username_length);
 
 	return username;
-}
-
-void client::close() {
-	boost::asio::post(io_context_, [this]() { socket_.close(); });
 }
 
 int main(int argc, char* argv[]) {
@@ -72,6 +72,9 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 
+		message message;
+		strcpy_s(message.header.username, set_username().c_str());
+
 		boost::asio::io_context io_context;
 		boost::asio::ip::tcp::resolver resolver(io_context);
 		auto endpoints = resolver.resolve(argv[1], argv[2]);
@@ -79,11 +82,8 @@ int main(int argc, char* argv[]) {
 		client client(io_context, endpoints);
 		std::thread thread([&io_context]() { io_context.run(); });
 
-		message message;
-		strcpy_s(message.header.username, client.set_username().c_str());
-
 		while (std::cin.getline(message.msg, message.max_length)) {
-			message.header.message_length = std::strlen(message.msg);
+			message.header.message_length = std::strlen(message.msg) + 1;
 			client.write(message);
 		}
 		client.close();
