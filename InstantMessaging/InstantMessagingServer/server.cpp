@@ -4,19 +4,13 @@
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
 
-	message welcome;
-	std::string welcome_msg = "A new user has joined! Welcome!";
-	std::copy(welcome_msg.begin(), welcome_msg.end(), welcome.msg);
-	deliver(welcome, std::nullopt);
+	send_announcement("A new user has joined! Welcome!");
 }
 
 void room::leave(std::shared_ptr<session> user) {
 	users_.erase(user);
 
-	message goodbye;
-	std::string goodbye_msg = "A user has left. Goodbye!";
-	std::copy(goodbye_msg.begin(), goodbye_msg.end(), goodbye.msg);
-	deliver(goodbye, std::nullopt);
+	send_announcement("A user has left. Goodbye!");
 }
 
 void room::deliver(const message& message, std::optional<std::shared_ptr<session>> sender) {
@@ -26,6 +20,14 @@ void room::deliver(const message& message, std::optional<std::shared_ptr<session
 			user->deliver(message);
 		}
 	}
+}
+
+void room::send_announcement(std::string announcement) {
+	message announcement_message;
+	std::copy(announcement.begin(), announcement.end() + 1, announcement_message.msg);
+	std::copy(name_.begin(), name_.end() + 1, announcement_message.header.username);
+	announcement_message.header.message_length = announcement.length() + 1;
+	deliver(announcement_message, std::nullopt);
 }
 
 void session::start() {

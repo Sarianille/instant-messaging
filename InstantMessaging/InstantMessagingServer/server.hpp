@@ -18,8 +18,11 @@ public:
 
 	void deliver(const message& message, std::optional<std::shared_ptr<session>> sender);
 
+	void send_announcement(std::string announcement);
+
 private:
 	std::unordered_set<std::shared_ptr<session>> users_; // We have one session per user, which is why we can consider them one and the same
+	std::string name_ = "SERVER";
 };
 
 class session : public std::enable_shared_from_this<session> {
