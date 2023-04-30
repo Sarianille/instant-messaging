@@ -22,6 +22,8 @@ public:
 
 	void close();
 
+	bool is_open();
+
 private:
 	boost::asio::ip::tcp::socket socket_;
 	boost::asio::io_context& io_context_;

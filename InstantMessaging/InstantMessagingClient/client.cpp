@@ -6,7 +6,9 @@ void client::do_connect(const boost::asio::ip::tcp::resolver::results_type& endp
 		if (!ec) {
 			receive_header();
 		}
-		});
+		else {
+			close();
+		}});
 }
 
 void client::receive_header() {
@@ -15,7 +17,9 @@ void client::receive_header() {
 			read_message_.set_host_byte_order();
 			receive_body();
 		}
-		});
+		else {
+			close();
+		}});
 }
 
 void client::receive_body() {
@@ -24,7 +28,9 @@ void client::receive_body() {
 			std::cout << "[" << read_message_.header.username << "]: " << read_message_.msg << std::endl;
 			receive_header();
 		}
-		});
+		else {
+			close();
+		}});
 }
 
 void client::write(const message& message) {
@@ -42,12 +48,18 @@ void client::write(const message& message) {
 					write(write_messages_.front());
 				}
 			}
-			});
+			else {
+				close();
+			}});
 	}
 }
 
 void client::close() {
 	boost::asio::post(io_context_, [this]() { socket_.close(); });
+}
+
+bool client::is_open() {
+	return socket_.is_open();
 }
 
 std::string set_username() {
@@ -82,7 +94,7 @@ int main(int argc, char* argv[]) {
 		client client(io_context, endpoints);
 		std::thread thread([&io_context]() { io_context.run(); });
 
-		while (std::cin.getline(message.msg, message.max_length)) {
+		while (std::cin.getline(message.msg, message.max_length) && client.is_open()) {
 			message.header.message_length = std::strlen(message.msg) + 1;
 			client.write(message);
 		}
