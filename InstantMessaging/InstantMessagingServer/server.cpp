@@ -31,7 +31,7 @@ void room::deliver(const message& message, std::optional<std::shared_ptr<session
 void session::start() {
 	room_.join(shared_from_this());
 
-	do_read();
+	do_read_header();
 }
 
 void session::deliver(const message& message) {
@@ -43,11 +43,23 @@ void session::deliver(const message& message) {
 	}
 }
 
-void session::do_read() {
-	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec, size_t read_bytes) {
+void session::do_read_header() {
+	boost::asio::async_read(socket_, boost::asio::buffer(&read_message_, sizeof(message::header)), [this](boost::system::error_code ec, size_t read_bytes) {
+		if (!ec) {
+			read_message_.set_host_byte_order();
+			do_read_body();
+		}
+		else {
+			room_.leave(shared_from_this());
+		}
+		});
+}
+
+void session::do_read_body() {
+	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg, read_message_.header.message_length), [this](boost::system::error_code ec, size_t read_bytes) {
 		if (!ec) {
 			room_.deliver(read_message_, shared_from_this());
-			do_read();
+			do_read_header();
 		}
 		else {
 			room_.leave(shared_from_this());
@@ -56,7 +68,10 @@ void session::do_read() {
 }
 
 void session::do_write() {
-	boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec, size_t written_bytes) {
+	unsigned int message_length = write_messages_.front().header.message_length;
+	write_messages_.front().set_network_byte_order();
+
+	boost::asio::async_write(socket_, boost::asio::buffer(&write_messages_.front(), sizeof(message::header) + message_length), [this](boost::system::error_code ec, size_t written_bytes) {
 		if (!ec) {
 			write_messages_.pop_front();
 			if (!write_messages_.empty()) {

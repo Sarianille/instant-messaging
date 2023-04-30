@@ -13,7 +13,9 @@ public:
 
 	void do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints);
 
-	void receive(const message& message);
+	void receive_header();
+
+	void receive_body();
 
 	void write(const message& message);
 

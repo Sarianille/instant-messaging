@@ -3,16 +3,25 @@
 void client::do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints) {
 	boost::asio::async_connect(socket_, endpoints, [this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint) {
 		if (!ec) {
-			receive(read_message_);
+			receive_header();
 		}
 		});
 }
 
-void client::receive(const message& message) {
-	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec, size_t read_bytes) {
+void client::receive_header() {
+	boost::asio::async_read(socket_, boost::asio::buffer(&read_message_, sizeof(message::header)), [this](boost::system::error_code ec, size_t read_bytes) {
 		if (!ec) {
-			std::cout << read_message_.msg << std::endl;
-			receive(read_message_);
+			read_message_.set_host_byte_order();
+			receive_body();
+		}
+		});
+}
+
+void client::receive_body() {
+	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg, read_message_.header.message_length), [this](boost::system::error_code ec, size_t read_bytes) {
+		if (!ec) {
+			std::cout << "[" << read_message_.header.username << "]: " << read_message_.msg << std::endl;
+			receive_header();
 		}
 		});
 }
@@ -22,7 +31,10 @@ void client::write(const message& message) {
 	write_messages_.push_back(message);
 
 	if (!write_in_progress) {
-		boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec, size_t written_bytes) {
+		unsigned int message_length = write_messages_.front().header.message_length;
+		write_messages_.front().set_network_byte_order();
+
+		boost::asio::async_write(socket_, boost::asio::buffer(&write_messages_.front(), sizeof(message::header) + message_length), [this](boost::system::error_code ec, size_t written_bytes) {
 			if (!ec) {
 				write_messages_.pop_front();
 				if (!write_messages_.empty()) {

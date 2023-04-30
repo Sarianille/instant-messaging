@@ -30,7 +30,9 @@ public:
 
 	void deliver(const message& message);
 
-	void do_read();
+	void do_read_header();
+
+	void do_read_body();
 
 	void do_write();
 
