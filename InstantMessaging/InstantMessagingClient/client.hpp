@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <deque>
 #include <iostream>
+#include <string>
 
 class client {
 public:
@@ -19,6 +20,8 @@ public:
 
 	void write(const message& message);
 
+	void set_username();
+
 	void close();
 
 private:
@@ -26,6 +29,7 @@ private:
 	boost::asio::io_context& io_context_;
 	message read_message_;
 	std::deque<message> write_messages_;
+	std::string username_;
 
 
 };

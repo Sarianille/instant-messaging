@@ -7,6 +7,7 @@ public:
 		char username[20];
 	} header ; 
 
+	static constexpr int max_username_length = 19;
 	static constexpr int max_length = 1000;
 	char msg[max_length];
 

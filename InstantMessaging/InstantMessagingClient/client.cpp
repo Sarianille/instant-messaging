@@ -45,6 +45,15 @@ void client::write(const message& message) {
 	}
 }
 
+void client::set_username() {
+	std::cout << "Enter username: ";
+
+	char username[message::max_username_length];
+	std::cin.getline(username, message::max_username_length);
+
+	username_ = username;
+}
+
 void client::close() {
 	boost::asio::post(io_context_, [this]() { socket_.close(); });
 }
@@ -68,6 +77,8 @@ int main(int argc, char* argv[]) {
 
 		client client(io_context, endpoints);
 		std::thread thread([&io_context]() { io_context.run(); });
+
+		client.set_username();
 
 		message message;
 		while (std::cin.getline(message.msg, message.max_length)) {
