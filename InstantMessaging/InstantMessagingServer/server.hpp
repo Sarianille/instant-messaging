@@ -7,6 +7,8 @@
 #include <memory>
 #include <deque>
 
+class session;
+
 class room {
 public:
 	void join(std::shared_ptr<session> user);

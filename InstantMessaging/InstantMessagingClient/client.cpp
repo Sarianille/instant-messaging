@@ -9,7 +9,7 @@ void client::do_connect(const boost::asio::ip::tcp::resolver::results_type& endp
 }
 
 void client::receive(const message& message) {
-	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec) {
+	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec, size_t read_bytes) {
 		if (!ec) {
 			std::cout << read_message_.msg << std::endl;
 			receive(read_message_);
@@ -22,7 +22,7 @@ void client::write(const message& message) {
 	write_messages_.push_back(message);
 
 	if (!write_in_progress) {
-		boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec) {
+		boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec, size_t written_bytes) {
 			if (!ec) {
 				write_messages_.pop_front();
 				if (!write_messages_.empty()) {

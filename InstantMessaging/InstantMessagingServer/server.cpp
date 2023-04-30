@@ -37,7 +37,7 @@ void session::deliver(const message& message) {
 }
 
 void session::do_read() {
-	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec) {
+	boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec, size_t read_bytes) {
 		if (!ec) {
 			room_.deliver(read_message_);
 			do_read();
@@ -49,7 +49,7 @@ void session::do_read() {
 }
 
 void session::do_write() {
-	boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec) {
+	boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec, size_t written_bytes) {
 		if (!ec) {
 			write_messages_.pop_front();
 			if (!write_messages_.empty()) {
