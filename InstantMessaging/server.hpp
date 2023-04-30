@@ -56,7 +56,15 @@ public:
 	}
 
 	void do_read() {
-
+		boost::asio::async_read(socket_, boost::asio::buffer(read_message_.msg), [this](boost::system::error_code ec) {
+			if (!ec) {
+				room_.deliver(read_message_);
+				do_read();
+			}
+			else {
+				room_.leave(shared_from_this());
+			}
+		});
 	}
 
 	void do_write() {
