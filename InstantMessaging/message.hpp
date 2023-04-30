@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/asio.hpp>
+
 class message {
 public:
 	struct {
@@ -12,10 +14,10 @@ public:
 	char msg[max_length];
 
 	void set_network_byte_order() {
-		header.message_length = htonl(header.message_length);
+		header.message_length = boost::asio::detail::socket_ops::host_to_network_long(header.message_length);
 	}
 
 	void set_host_byte_order() {
-		header.message_length = ntohl(header.message_length);
+		header.message_length = boost::asio::detail::socket_ops::network_to_host_long(header.message_length);
 	}
 };
