@@ -3,6 +3,7 @@
 
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
+
 }
 
 void room::leave(std::shared_ptr<session> user) {
@@ -10,12 +11,6 @@ void room::leave(std::shared_ptr<session> user) {
 }
 
 void room::deliver(const message& message) {
-	recent_messages_.push_back(message);
-
-	while (recent_messages_.size() > max_recent_messages) {
-		recent_messages_.pop_front();
-	}
-
 	for (auto user : users_) {
 		user->deliver(message);
 	}

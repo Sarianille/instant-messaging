@@ -19,8 +19,6 @@ public:
 
 private:
 	std::unordered_set<std::shared_ptr<session>> users_; // We have one session per user, which is why we can consider them one and the same
-	std::deque<message> recent_messages_;
-	static constexpr int max_recent_messages = 100;
 };
 
 class session : public std::enable_shared_from_this<session> {
