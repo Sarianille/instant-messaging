@@ -3,10 +3,20 @@
 
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
+
+	message welcome;
+	std::string welcome_msg = "A new user has joined! Welcome!\n";
+	std::copy(welcome_msg.begin(), welcome_msg.end(), welcome.msg);
+	deliver(welcome);
 }
 
 void room::leave(std::shared_ptr<session> user) {
 	users_.erase(user);
+
+	message goodbye;
+	std::string goodbye_msg = "A user has left. Goodbye!\n";
+	std::copy(goodbye_msg.begin(), goodbye_msg.end(), goodbye.msg);
+	deliver(goodbye);
 }
 
 void room::deliver(const message& message) {
@@ -17,10 +27,6 @@ void room::deliver(const message& message) {
 
 void session::start() {
 	room_.join(shared_from_this());
-	message welcome;
-	std::string welcome_msg = "A new user has joined! Welcome!\n";
-	std::copy(welcome_msg.begin(), welcome_msg.end(), welcome.msg);
-	deliver(welcome);
 
 	do_read();
 }
