@@ -68,7 +68,17 @@ public:
 	}
 
 	void do_write() {
-
+		boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec) {
+			if (!ec) {
+				write_messages_.pop_front();
+				if (!write_messages_.empty()) {
+					do_write();
+				}
+			}
+			else {
+				room_.leave(shared_from_this());
+			}
+		});
 	}
 
 private:
