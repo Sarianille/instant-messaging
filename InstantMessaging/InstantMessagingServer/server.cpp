@@ -5,25 +5,28 @@ void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
 
 	message welcome;
-	std::string welcome_msg = "A new user has joined! Welcome!\n";
+	std::string welcome_msg = "A new user has joined! Welcome!";
 	std::copy(welcome_msg.begin(), welcome_msg.end(), welcome.msg);
-	deliver(welcome);
+	deliver(welcome, std::nullopt);
 }
 
 void room::leave(std::shared_ptr<session> user) {
 	users_.erase(user);
 
 	message goodbye;
-	std::string goodbye_msg = "A user has left. Goodbye!\n";
+	std::string goodbye_msg = "A user has left. Goodbye!";
 	std::copy(goodbye_msg.begin(), goodbye_msg.end(), goodbye.msg);
-	deliver(goodbye);
+	deliver(goodbye, std::nullopt);
 }
 
-void room::deliver(const message& message) {
+void room::deliver(const message& message, std::optional<std::shared_ptr<session>> sender) {
 	for (auto user : users_) {
 		if (user->username_picked)
 		{
-			user->deliver(message);
+			if (user != sender)
+			{
+				user->deliver(message);
+			}
 		}
 	}
 }
@@ -58,7 +61,7 @@ void session::do_read() {
 		if (!ec) {
 			if (username_picked)
 			{
-				room_.deliver(read_message_);
+				room_.deliver(read_message_, shared_from_this());
 				do_read();
 			}
 			else {

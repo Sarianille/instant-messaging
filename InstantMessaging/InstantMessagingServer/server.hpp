@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <memory>
 #include <deque>
+#include <optional>
 
 class session;
 
@@ -15,7 +16,7 @@ public:
 
 	void leave(std::shared_ptr<session> user);
 
-	void deliver(const message& message);
+	void deliver(const message& message, std::optional<std::shared_ptr<session>> sender);
 
 private:
 	std::unordered_set<std::shared_ptr<session>> users_; // We have one session per user, which is why we can consider them one and the same
@@ -30,8 +31,6 @@ public:
 	void start();
 
 	void ask_for_username();
-
-	void read_username();
 
 	void deliver(const message& message);
 
