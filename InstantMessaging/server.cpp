@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include <iostream>
 
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
@@ -68,4 +69,30 @@ void server::do_accept() {
 		}
 		do_accept();
 		});
+}
+
+int main(int argc, char* argv[]) {
+	try {
+		if (argc < 2)
+		{
+			std::cout << "Port not specified." << std::endl;
+			return 1;
+		}
+		else if (argc > 2)
+		{
+			std::cout << "Too many arguments." << std::endl;
+			return 1;
+		}
+
+		boost::asio::io_context io_context;
+		boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), std::atoi(argv[1]));
+
+		server server(io_context, endpoint);
+		io_context.run();
+	}
+	catch (std::exception& e) {
+		std::cerr << e.what() << std::endl;
+	}
+
+	return 0;
 }
