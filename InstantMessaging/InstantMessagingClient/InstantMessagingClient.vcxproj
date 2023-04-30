@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{86c5e99f-6fb8-47f6-82b6-8317eba719fb}</ProjectGuid>
-    <RootNamespace>InstantMessaging</RootNamespace>
+    <ProjectGuid>{42e85f14-8715-4698-8cb7-03208fc47d33}</ProjectGuid>
+    <RootNamespace>InstantMessagingClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,12 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="client.cpp" />
-    <ClCompile Include="server.cpp" />
+    <ClInclude Include="client.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client.hpp" />
-    <ClInclude Include="server.hpp" />
+    <ClCompile Include="client.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
