@@ -1,6 +1,6 @@
 #pragma once
 
-#include "message.hpp"
+#include "..\message.hpp"
 #include <boost/asio.hpp>
 #include <string>
 #include <unordered_set>

@@ -22,7 +22,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{86c5e99f-6fb8-47f6-82b6-8317eba719fb}</ProjectGuid>
-    <RootNamespace>InstantMessaging</RootNamespace>
+    <RootNamespace>InstantMessagingServer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>InstantMessagingServer</ProjectName>
   </PropertyGroup>
@@ -131,6 +131,7 @@
     <ClCompile Include="server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\message.hpp" />
     <ClInclude Include="server.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
