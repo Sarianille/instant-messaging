@@ -3,7 +3,6 @@
 
 void room::join(std::shared_ptr<session> user) {
 	users_.insert(user);
-
 }
 
 void room::leave(std::shared_ptr<session> user) {
