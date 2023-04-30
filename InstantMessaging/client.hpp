@@ -11,11 +11,19 @@ public:
 	}
 
 	void do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints) {
+		boost::asio::async_connect(socket_, endpoints, [this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint) {
+			if (!ec) {
+				read(read_message_);
+			}
+		});
+	}
+
+	void read(const message& message) {
 
 	}
 
 	void write(const message& message) {
-		
+
 	}
 	void close() {
 		
