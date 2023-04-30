@@ -1,5 +1,5 @@
 #include "client.hpp"
-#include <cstring>
+#include <string.h>
 
 void client::do_connect(const boost::asio::ip::tcp::resolver::results_type& endpoints) {
 	boost::asio::async_connect(socket_, endpoints, [this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint) {
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 		std::thread thread([&io_context]() { io_context.run(); });
 
 		message message;
-		std::strcpy(message.header.username, client.set_username().c_str());
+		strcpy_s(message.header.username, client.set_username().c_str());
 
 		while (std::cin.getline(message.msg, message.max_length)) {
 			message.header.message_length = std::strlen(message.msg);
