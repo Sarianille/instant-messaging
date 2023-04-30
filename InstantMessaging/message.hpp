@@ -2,5 +2,6 @@
 
 class message {
 public:
-	char msg[1000];
+	static constexpr int max_length = 1000;
+	char msg[max_length];
 };
