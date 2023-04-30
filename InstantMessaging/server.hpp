@@ -90,7 +90,19 @@ private:
 
 class server {
 public:
-	server(boost::asio::io_context& io_context, const boost::asio::ip::tcp::endpoint& endpoint) : io_context_(io_context), acceptor_(io_context, endpoint) { }
+	server(boost::asio::io_context& io_context, const boost::asio::ip::tcp::endpoint& endpoint) : io_context_(io_context), acceptor_(io_context, endpoint)
+	{
+		do_accept();
+	}
+
+	void do_accept() {
+		acceptor_.async_accept([this](boost::system::error_code ec, boost::asio::ip::tcp::socket socket) {
+			if (!ec) {
+				std::make_shared<session>(std::move(socket), room_)->start();
+			}
+			do_accept();
+		});
+	}
 
 private:
 	boost::asio::io_context& io_context_;
