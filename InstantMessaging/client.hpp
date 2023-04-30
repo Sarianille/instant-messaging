@@ -29,8 +29,21 @@ public:
 	}
 
 	void write(const message& message) {
+		bool write_in_progress = !write_messages_.empty();
+		write_messages_.push_back(message);
 
+		if (!write_in_progress) {
+			boost::asio::async_write(socket_, boost::asio::buffer(write_messages_.front().msg), [this](boost::system::error_code ec) {
+				if (!ec) {
+					write_messages_.pop_front();
+					if (!write_messages_.empty()) {
+						write(write_messages_.front());
+					}
+				}
+				});
+		}
 	}
+
 	void close() {
 		
 	}
