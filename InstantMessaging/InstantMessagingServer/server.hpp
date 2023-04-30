@@ -26,11 +26,7 @@ class session : public std::enable_shared_from_this<session> {
 public:
 	session(boost::asio::ip::tcp::socket socket, room& room) : socket_(std::move(socket)), room_(room) { }
 
-	bool username_picked = false;
-
 	void start();
-
-	void ask_for_username();
 
 	void deliver(const message& message);
 
@@ -43,7 +39,6 @@ private:
 	room& room_;
 	message read_message_;
 	std::deque<message> write_messages_;
-	std::string username = "anonymous";
 };
 
 class server {
