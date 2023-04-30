@@ -23,7 +23,7 @@ private:
 	static constexpr int max_recent_messages = 100;
 };
 
-class session : std::enable_shared_from_this<session> {
+class session : public std::enable_shared_from_this<session> {
 public:
 	session(boost::asio::ip::tcp::socket socket, room& room) : socket_(std::move(socket)), room_(room) { }
 
