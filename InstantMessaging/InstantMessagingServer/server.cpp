@@ -25,7 +25,7 @@ void room::deliver(const message& message, std::optional<std::shared_ptr<session
 	}
 }
 
-void room::send_announcement(std::string announcement) {
+void room::send_announcement(const std::string& announcement) {
 	message announcement_message;
 	std::copy(announcement.begin(), announcement.end() + 1, announcement_message.msg);
 	std::copy(name_.begin(), name_.end() + 1, announcement_message.header.username);

@@ -19,7 +19,7 @@ public:
 
 	void deliver(const message& message, std::optional<std::shared_ptr<session>> sender);
 
-	void send_announcement(std::string announcement);
+	void send_announcement(const std::string& announcement);
 
 	void log_event(const std::string& event_message);
 
