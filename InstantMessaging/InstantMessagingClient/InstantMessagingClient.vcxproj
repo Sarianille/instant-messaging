@@ -119,12 +119,14 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>../../imgui;../../imgui/backends</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d11.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -132,7 +134,15 @@
     <ClInclude Include="client.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="client.cpp" />
+    <ClCompile Include="UI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
