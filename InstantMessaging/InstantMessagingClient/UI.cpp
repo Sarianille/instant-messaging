@@ -68,10 +68,11 @@ int main(int, char**)
     char host_name_buffer[host_name_buffer_size];
     char username_buffer[username_buffer_size];
     char message_buffer[message_buffer_size];
-    memset(host_name_buffer, 0, host_name_buffer_size*sizeof(char));
-    memset(username_buffer, 0, username_buffer_size*sizeof(char));
-    memset(message_buffer, 0, message_buffer_size*sizeof(char));
+    memset(host_name_buffer, 0, host_name_buffer_size * sizeof(char));
+    memset(username_buffer, 0, username_buffer_size * sizeof(char));
+    memset(message_buffer, 0, message_buffer_size * sizeof(char));
     const char* error_msg = nullptr;
+    std::optional<std::thread> thread;
 
     // Main loop
     bool done = false;
@@ -111,7 +112,7 @@ int main(int, char**)
         {
             int old_port_number = port_number;
 
-            ImGui::Begin("Log in", &show_login_window);
+            ImGui::Begin("Log in");
             ImGui::Text("Please choose host:");
             ImGui::InputText("###Host:", host_name_buffer, host_name_buffer_size, 1);
             ImGui::Text("Please choose port:");
@@ -148,6 +149,8 @@ int main(int, char**)
                         {
                             show_chat_window = true;
                             show_login_window = false;
+
+                            thread = std::thread([&io_context]() { io_context.run(); });
                             client->do_connect();
                         }
                     }
@@ -201,17 +204,39 @@ int main(int, char**)
         {
             ImGui::Begin("Chatroom", &show_chat_window);
             
-            ImGui::Text("");
+            ImGui::BeginChild("Chat", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
+            client->render_messages();
+            ImGui::EndChild();
 
-            ImGui::InputText("###Message:", message_buffer, message_buffer_size);
+            ImGui::PushItemWidth(-45);
+            bool message_sent_with_enter = ImGui::InputText("###Message:", message_buffer, message_buffer_size, ImGuiInputTextFlags_EnterReturnsTrue);
+            ImGui::PopItemWidth();
             ImGui::SameLine();
-            if (ImGui::Button("Send"))
+            if (ImGui::Button("Send") || message_sent_with_enter)
             {
-				//poslat zprávu
+                if (client->is_open())
+                {
+					client->write(message_buffer);
+					memset(message_buffer, 0, message_buffer_size * sizeof(char));
+				}
+                else
+                {
+					show_chat_window = false;
+				}
 			}
 
             ImGui::End();
         }
+
+        if (!show_login_window && !show_chat_window)
+        {
+            client->close();
+            thread->join();
+            thread.reset();
+            client.reset();
+
+			show_login_window = true;
+		}
 
         // Rendering
         ImGui::Render();
