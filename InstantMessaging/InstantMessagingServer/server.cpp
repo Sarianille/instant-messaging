@@ -22,6 +22,13 @@ void room::deliver(const message& message, std::optional<std::shared_ptr<session
 		{
 			user->deliver(message);
 		}
+		else
+		{
+			std::stringstream new_message = std::stringstream();
+			new_message << "[" << message.header.username << "]: " << message.msg;
+
+			log_event(new_message.str());
+		}
 	}
 }
 
