@@ -9,6 +9,8 @@
 #include <mutex>
 #include <functional>
 #include <sstream>
+#include <atomic>
+#include <thread>
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
@@ -30,9 +32,13 @@ public:
 
 	void render_messages();
 
-	static std::optional<client> create_client(char host[], int port, char username[], boost::asio::io_context& io_context);
+	static client create_client(char host[], int port, char username[], boost::asio::io_context& io_context);
 
-	client(client&& other) noexcept : socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), read_message_(std::move(other.read_message_)), read_messages_(std::move(other.read_messages_)), write_messages_(std::move(other.write_messages_)), read_messages_old_size_(other.read_messages_old_size_) {
+	std::optional<std::string>& get_error_message();
+
+	void clear_error_message();
+
+	client(client&& other) noexcept : socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), read_message_(std::move(other.read_message_)), read_messages_(std::move(other.read_messages_)), write_messages_(std::move(other.write_messages_)), read_messages_old_size_(other.read_messages_old_size_), error_message_(other.error_message_), read_messages_mutex_() {
 		strcpy_s(username_, other.username_);
 	}
 
@@ -45,6 +51,7 @@ public:
 		write_messages_ = std::move(other.write_messages_);
 		strcpy_s(username_, other.username_);
 		read_messages_old_size_ = other.read_messages_old_size_;
+		error_message_ = other.error_message_;
 		return *this;
 	}
 
@@ -59,6 +66,9 @@ private:
 	std::mutex read_messages_mutex_;
 	int read_messages_old_size_;
 	static constexpr int max_messages = 100;
+	static constexpr int connection_aborted_error = 1236;
+	std::optional<std::string> error_message_ = std::nullopt;
+	std::atomic<bool> is_connected_ = false;
 
 	client(boost::asio::io_context* io_context, boost::asio::ip::tcp::resolver::results_type&& endpoints, char username[]) : io_context_(io_context), socket_(*io_context), endpoints_(std::move(endpoints)) {
 		strcpy_s(username_, username);
@@ -67,4 +77,6 @@ private:
 	void save_new_message(message&& message);
 
 	void write_new_message();
+
+	void handle_error(const boost::system::error_code& ec);
 };

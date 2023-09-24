@@ -31,8 +31,7 @@ int main(int, char**)
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Instant Messaging", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize Direct3D
-    if (!CreateDeviceD3D(hwnd))
-    {
+    if (!CreateDeviceD3D(hwnd)) {
         CleanupDeviceD3D();
         ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
         return 1;
@@ -60,7 +59,7 @@ int main(int, char**)
     bool show_chat_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     int port_number = 0;
-    boost::asio::io_context io_context;
+    std::unique_ptr<boost::asio::io_context> io_context;
     std::optional<client> client = std::nullopt;
     constexpr int host_name_buffer_size = 256;
     constexpr int username_buffer_size = 20;
@@ -76,13 +75,11 @@ int main(int, char**)
 
     // Main loop
     bool done = false;
-    while (!done)
-    {
+    while (!done) {
         // Poll and handle messages (inputs, window resize, etc.)
         // See the WndProc() function below for our to dispatch events to the Win32 backend.
         MSG msg;
-        while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-        {
+        while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
             if (msg.message == WM_QUIT)
@@ -92,8 +89,7 @@ int main(int, char**)
             break;
 
         // Handle window resize (we don't resize directly in the WM_SIZE handler)
-        if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
-        {
+        if (g_ResizeWidth != 0 && g_ResizeHeight != 0) {
             CleanupRenderTarget();
             g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
             g_ResizeWidth = g_ResizeHeight = 0;
@@ -108,65 +104,54 @@ int main(int, char**)
 
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_login_window)
-        {
+        if (show_login_window) {
             int old_port_number = port_number;
 
             ImGui::Begin("Log in");
             ImGui::Text("Please choose host:");
             ImGui::InputText("###Host:", host_name_buffer, host_name_buffer_size, 1);
             ImGui::Text("Please choose port:");
-            if (ImGui::InputInt("###Port:", &port_number, 0))
-            {
-                if (!is_valid_port(port_number))
-                {
+            if (ImGui::InputInt("###Port:", &port_number, 0)) {
+                if (!is_valid_port(port_number)) {
                     port_number = old_port_number;
                 }
             }
             ImGui::Text("Please choose username:");
             ImGui::InputText("###Username:", username_buffer, username_buffer_size);
 
-            if (ImGui::Button("Log in"))
-            {
-                if (!is_valid_info(host_name_buffer))
-                {
+            if (ImGui::Button("Log in")) {
+                if (!is_valid_info(host_name_buffer)) {
                     error_msg = host_error_msg;
                     ImGui::OpenPopup("Log in error.");
                 }
-                else if (!is_valid_info(username_buffer))
-                {
+                else if (!is_valid_info(username_buffer)) {
                     error_msg = username_error_msg;
                     ImGui::OpenPopup("Log in error.");
 
 				}
-                else
-                {
-                    try
-                    {
-                        client = client::create_client(host_name_buffer, port_number, username_buffer, io_context);
+                else {
+                    try {
+                        // This is required to avoid destroying the old io_context before the socket contained within the client
+                        std::unique_ptr<boost::asio::io_context> new_io_context = std::make_unique<boost::asio::io_context>();
+                        client = client::create_client(host_name_buffer, port_number, username_buffer, *new_io_context);
+                        io_context = std::move(new_io_context);
 
-                        if (client.has_value())
-                        {
-                            show_chat_window = true;
-                            show_login_window = false;
+                        show_chat_window = true;
+                        show_login_window = false;
 
-                            thread = std::thread([&io_context]() { io_context.run(); });
-                            client->do_connect();
-                        }
+                        client->do_connect();
+                        thread = std::thread([&io_context]() { io_context->run(); });
                     }
-                    catch (std::exception& e)
-                    {
+                    catch (std::exception& e) {
 						error_msg = exception_error_msg;
 						ImGui::OpenPopup("Log in error.");
                     }
                 }
             }
 
-            if (ImGui::BeginPopupModal("Log in error."))
-            {
+            if (ImGui::BeginPopupModal("Log in error.")) {
                 ImGui::Text(error_msg);
-                if (ImGui::Button("OK"))
-                {
+                if (ImGui::Button("OK")) {
                     ImGui::CloseCurrentPopup();
                 }
 
@@ -200,40 +185,49 @@ int main(int, char**)
         }
 
         // 3. Show another simple window.
-        if (show_chat_window)
-        {
+        if (show_chat_window) {
             ImGui::Begin("Chatroom", &show_chat_window);
             
             ImGui::BeginChild("Chat", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
             client->render_messages();
             ImGui::EndChild();
 
-            ImGui::PushItemWidth(-45);
-            bool message_sent_with_enter = ImGui::InputText("###Message:", message_buffer, message_buffer_size, ImGuiInputTextFlags_EnterReturnsTrue);
-            ImGui::PopItemWidth();
-            ImGui::SameLine();
-            if (ImGui::Button("Send") || message_sent_with_enter)
-            {
-                if (client->is_open())
-                {
-					client->write(message_buffer);
-					memset(message_buffer, 0, message_buffer_size * sizeof(char));
-				}
-                else
-                {
-					show_chat_window = false;
-				}
+            if (client->is_open()) {
+                ImGui::PushItemWidth(-45);
+                bool message_sent_with_enter = ImGui::InputText("###Message:", message_buffer, message_buffer_size, ImGuiInputTextFlags_EnterReturnsTrue);
+                ImGui::PopItemWidth();
+                ImGui::SameLine();
+                if (ImGui::Button("Send") || message_sent_with_enter) {
+                    client->write(message_buffer);
+                    memset(message_buffer, 0, message_buffer_size * sizeof(char));
+                }
+            }
+            else {
+				ImGui::Text("Connecting...");
 			}
 
             ImGui::End();
         }
 
-        if (!show_login_window && !show_chat_window)
-        {
+        if (client.has_value() && client->get_error_message().has_value()) {
+            ImGui::OpenPopup("Error");
+            ImGui::BeginPopupModal("Error");
+            ImGui::Text(client->get_error_message()->c_str());
+
+            if (ImGui::Button("OK")) {
+                client->clear_error_message();
+                ImGui::CloseCurrentPopup();
+                show_chat_window = false;
+            }
+
+            ImGui::EndPopup();
+		}
+
+        if (!show_login_window && !show_chat_window) {
             client->close();
+            //client.reset();
             thread->join();
             thread.reset();
-            client.reset();
 
 			show_login_window = true;
 		}
@@ -296,24 +290,21 @@ bool CreateDeviceD3D(HWND hWnd)
     return true;
 }
 
-void CleanupDeviceD3D()
-{
+void CleanupDeviceD3D() {
     CleanupRenderTarget();
     if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = nullptr; }
     if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = nullptr; }
     if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
 }
 
-void CreateRenderTarget()
-{
+void CreateRenderTarget() {
     ID3D11Texture2D* pBackBuffer;
     g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
     g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
     pBackBuffer->Release();
 }
 
-void CleanupRenderTarget()
-{
+void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
 }
 
@@ -325,13 +316,11 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
 // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
 // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
 
-    switch (msg)
-    {
+    switch (msg) {
     case WM_SIZE:
         if (wParam == SIZE_MINIMIZED)
             return 0;
@@ -349,13 +338,11 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-bool is_valid_port(int port_number)
-{
+bool is_valid_port(int port_number) {
     return (0 <= port_number && port_number <= 65535);
 }
 
-bool is_valid_info(char name_buffer[])
-{
+bool is_valid_info(char name_buffer[]) {
     if (strlen(name_buffer) == 0)
     {
         return false;

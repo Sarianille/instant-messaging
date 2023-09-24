@@ -4,10 +4,11 @@
 void client::do_connect() {
 	boost::asio::async_connect(socket_, endpoints_, [this](boost::system::error_code ec, boost::asio::ip::tcp::endpoint) {
 		if (!ec) {
+			is_connected_ = true;
 			receive_header();
 		}
 		else {
-			close();
+			handle_error(ec);
 		}});
 }
 
@@ -18,7 +19,7 @@ void client::receive_header() {
 			receive_body();
 		}
 		else {
-			close();
+			handle_error(ec);
 		}});
 }
 
@@ -29,7 +30,7 @@ void client::receive_body() {
 			receive_header();
 		}
 		else {
-			close();
+			handle_error(ec);
 		}});
 }
 
@@ -39,17 +40,30 @@ void client::write(char content[]) {
 	message.header.message_length = strlen(content) + 1;
 	strcpy_s(message.msg, content);
 
+	bool write_in_progress = !write_messages_.empty();
 	write_messages_.push_back(message);
 	save_new_message(std::move(message));
-	write_new_message();
+	if (!write_in_progress) {
+		write_new_message();
+	}
 }
 
 void client::close() {
-	boost::asio::post(*io_context_, [this]() { socket_.close(); });
+	boost::asio::post(*io_context_, [this]() {
+		if (is_open())
+		{
+			//socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+			socket_.close();
+		}
+		io_context_->stop();
+		});
+
+	/*socket_.close();
+	io_context_->stop();*/
 }
 
 bool client::is_open() {
-	return socket_.is_open();
+	return is_connected_;
 }
 
 void client::render_messages() {
@@ -72,7 +86,7 @@ void client::render_messages() {
 	}
 }
 
-std::optional<client> client::create_client(char host[], int port, char username[], boost::asio::io_context& io_context) {
+client client::create_client(char host[], int port, char username[], boost::asio::io_context& io_context) {
 	char port_str[64];
 	sprintf_s(port_str, "%d", port);
 
@@ -84,6 +98,14 @@ std::optional<client> client::create_client(char host[], int port, char username
 	return client;
 }
 
+std::optional<std::string>& client::get_error_message() {
+	return error_message_;
+}
+
+void client::clear_error_message() {
+	error_message_.reset();
+}
+
 void client::save_new_message(message&& message) {
 	std::stringstream new_message = std::stringstream();
 	new_message << "[" << message.header.username << "]: " << message.msg;
@@ -93,21 +115,27 @@ void client::save_new_message(message&& message) {
 }
 
 void client::write_new_message() {
-	bool write_in_progress = !write_messages_.size() > 1;
-
-	if (!write_in_progress) {
+	if (!write_messages_.empty()) {
 		unsigned int message_length = write_messages_.front().header.message_length;
 		write_messages_.front().set_network_byte_order();
 
 		boost::asio::async_write(socket_, boost::asio::buffer(&write_messages_.front(), sizeof(message::header) + message_length), [this](boost::system::error_code ec, size_t written_bytes) {
 			if (!ec) {
 				write_messages_.pop_front();
-				if (!write_messages_.empty()) {
-					write_new_message();
-				}
+				write_new_message();
 			}
 			else {
-				close();
+				handle_error(ec);
 			}});
 	}
+}
+
+void client::handle_error(const boost::system::error_code& ec) {
+	if (ec.value() != connection_aborted_error) {
+		std::stringstream error_message;
+		error_message << "Encountered error " << ec << ". Closing chat." << std::endl;
+		error_message_ = error_message.str();
+	}
+
+	close();
 }
