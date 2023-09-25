@@ -2,6 +2,9 @@
 #include <d3d11.h>
 #include <tchar.h>
 
+// The code in this file is copied from the ImGui DirectX11 example
+// It can be found here: https://github.com/ocornut/imgui/blob/master/examples/example_win32_directx11/main.cpp
+
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
 static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
