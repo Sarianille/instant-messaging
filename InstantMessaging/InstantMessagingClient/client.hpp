@@ -1,13 +1,13 @@
 #pragma once
 
 #include "..\message.hpp"
+#include "errors.hpp"
 #include <boost/asio.hpp>
 #include <deque>
 #include <iostream>
 #include <string>
 #include <optional>
 #include <mutex>
-#include <functional>
 #include <sstream>
 #include <atomic>
 #include <thread>
@@ -76,15 +76,12 @@ public:
 
 	bool is_open();
 
-	void clear_error_message();
-
 	void render_messages();
 
-	static client create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context);
+	static client create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context, errors::error_handler& error_handler);
 
-	std::optional<std::string>& get_error_message();
-
-	client(client&& other) noexcept : username_(), message_handler_(std::move(other.message_handler_)), socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), error_message_(std::move(other.error_message_)), is_connected_(other.is_connected_.load()) {
+	client(client&& other) noexcept : username_(), message_handler_(std::move(other.message_handler_)), error_handler_(other.error_handler_), 
+		socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), is_connected_(other.is_connected_.load()) {
 		strcpy_s(username_, other.username_);
 	}
 
@@ -94,7 +91,6 @@ public:
 		socket_ = std::move(other.socket_);
 		io_context_ = other.io_context_;
 		endpoints_ = std::move(other.endpoints_);
-		error_message_ = std::move(other.error_message_);
 		is_connected_ = other.is_connected_.load();
 		return *this;
 	}
@@ -102,13 +98,14 @@ public:
 private:
 	char username_[20];
 	message_handler message_handler_;
+	errors::error_handler& error_handler_;
 	boost::asio::ip::tcp::socket socket_;
 	boost::asio::io_context* io_context_;
 	boost::asio::ip::tcp::resolver::results_type endpoints_;
-	std::optional<std::string> error_message_ = std::nullopt;
 	std::atomic<bool> is_connected_ = false;
 
-	client(boost::asio::io_context* io_context, boost::asio::ip::tcp::resolver::results_type&& endpoints, const char username[]) : io_context_(io_context), socket_(*io_context), endpoints_(std::move(endpoints)) {
+	client(boost::asio::io_context* io_context, boost::asio::ip::tcp::resolver::results_type&& endpoints, const char username[], errors::error_handler& error_handler)
+		: message_handler_(), error_handler_(error_handler), socket_(*io_context), io_context_(io_context), endpoints_(std::move(endpoints)) {
 		strcpy_s(username_, username);
 	}
 

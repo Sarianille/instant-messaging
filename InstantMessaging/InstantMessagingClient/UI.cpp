@@ -5,7 +5,7 @@ void login_window::render() {
 	int old_port_number = port_number;
     logged_in = false;
 
-    ImGui::Begin("Log in");
+    ImGui::Begin("Log in", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text("Please choose host:");
     ImGui::InputText("###Host:", host_name_buffer, host_name_buffer_size, 1);
     ImGui::Text("Please choose port:");
@@ -19,26 +19,14 @@ void login_window::render() {
 
     if (ImGui::Button("Log in") || logged_in_with_enter) {
         if (!is_valid_info(host_name_buffer)) {
-            error_msg = errors::host_error_msg;
-            ImGui::OpenPopup("Log in error.");
+            error_handler.set_error_message(errors::host_error_msg);
         }
         else if (!is_valid_info(username_buffer)) {
-            error_msg = errors::username_error_msg;
-            ImGui::OpenPopup("Log in error.");
-
+            error_handler.set_error_message(errors::username_error_msg);
         }
         else {
             logged_in = true;
         }
-    }
-
-    if (ImGui::BeginPopupModal("Log in error.")) {
-        ImGui::Text(error_msg);
-        if (ImGui::Button("OK")) {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
     }
 
     ImGui::End();
@@ -65,7 +53,7 @@ bool login_window::is_valid_info(char name_buffer[]) {
 }
 
 void chat_window::render() {
-    ImGui::Begin("Chatroom", &running);
+    ImGui::Begin("Chatroom", &show_chat_window);
 
     ImGui::BeginChild("Chat", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
     client->render_messages();
@@ -95,31 +83,61 @@ void chat_window::open_chat_window(const char host[], int port, const char usern
     try {
         // This is required to avoid destroying the old io_context before the socket contained within the client
         std::unique_ptr<boost::asio::io_context> new_io_context = std::make_unique<boost::asio::io_context>();
-        client = client::create_client(host, port, username, *new_io_context);
+        client = client::create_client(host, port, username, *new_io_context, error_handler);
         io_context = std::move(new_io_context);
 
         client->do_connect();
-        thread = std::thread([&io_context = this->io_context]() { io_context->run(); });
+        thread = std::thread([&io_context = this->io_context]() { 
+            try {
+                io_context->run();
+            }
+            catch (std::exception& e) {
+                std::cout << e.what();
+                throw;
+            }
+            });
     }
     catch (std::exception& e) {
-        error_msg = errors::exception_error_msg;
-        ImGui::OpenPopup("Log in error.");
+        error_handler.set_error_message(errors::exception_error_msg);
     }
 }
 
+void chat_window::close_chat_window() {
+	client->close();
+	thread->join();
+	thread.reset();
+}
+
 void ui::render() {
-	if (show_login_window) {
+	if (login_window.show_login_window) {
 		login_window.render();
+        error_handler.potentially_display_error_message(errors::login_error_title, []() {});
 	}
 
     if (login_window.logged_in) {
 		chat_window.open_chat_window(login_window.get_host_name(), login_window.get_port_number(), login_window.get_username());
 
-        show_chat_window = true;
-        show_login_window = false;
+        chat_window.show_chat_window = true;
+        login_window.show_login_window = false;
+        login_window.logged_in = false;
+
+        if (error_handler.error_message_.has_value()) {
+            error_handler.potentially_display_error_message(errors::login_error_title, []() {});
+
+            chat_window.show_chat_window = false;
+            login_window.show_login_window = true;
+        }
 	}
 
-	if (show_chat_window) {
+	if (chat_window.show_chat_window) {
 		chat_window.render();
+        error_handler.potentially_display_error_message(errors::chatroom_error_title, [this]() {
+            chat_window.show_chat_window = false;
+            });
 	}
+
+    if (!login_window.show_login_window && !chat_window.show_chat_window) {
+        chat_window.close_chat_window();
+        login_window.show_login_window = true;
+    }
 }

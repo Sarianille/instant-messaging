@@ -147,6 +147,7 @@
     <ClCompile Include="..\..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="client.cpp" />
+    <ClCompile Include="errors.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ui.cpp" />
   </ItemGroup>

@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "ui.hpp"
 #include <d3d11.h>
 #include <tchar.h>
 
@@ -50,6 +50,7 @@ int main(int, char**)
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
     // Our state
+    ui ui;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
@@ -80,50 +81,7 @@ int main(int, char**)
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_login_window) {
-            
-        }
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_chat_window) {
-            
-        }
-
-        if (client.has_value() && client->get_error_message().has_value()) {
-            ImGui::OpenPopup("Error");
-            ImGui::BeginPopupModal("Error");
-            ImGui::Text(client->get_error_message()->c_str());
-
-            if (ImGui::Button("OK")) {
-                client->clear_error_message();
-                ImGui::CloseCurrentPopup();
-                show_chat_window = false;
-            }
-
-            ImGui::EndPopup();
-		}
-
-        if (!show_login_window && !show_chat_window) {
-            client->close();
-            //client.reset();
-            thread->join();
-            thread.reset();
-
-			show_login_window = true;
-		}
+        ui.render();
 
         // Rendering
         ImGui::Render();

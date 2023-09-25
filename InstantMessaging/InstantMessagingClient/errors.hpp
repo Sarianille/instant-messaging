@@ -2,6 +2,9 @@
 
 #include <boost/asio.hpp>
 #include <optional>
+#include <string>
+#include <functional>
+#include <mutex>
 
 namespace errors {
 	enum common_error_types {
@@ -11,6 +14,9 @@ namespace errors {
 		connection_refused = 10061
 	};
 
+	static constexpr char login_error_title[] = "Log in error";
+	static constexpr char chatroom_error_title[] = "Error";
+
 	static constexpr char connection_aborted_error_message[] = "Connection aborted";
 	static constexpr char server_disconnected_error_message[] = "Server disconnected";
 	static constexpr char connection_timed_out_error_message[] = "Connection timed out";
@@ -19,18 +25,19 @@ namespace errors {
 	static constexpr char username_error_msg[] = "Username is empty. Please enter username.";
 	static constexpr char exception_error_msg[] = "Exception occurred. Ensure your data is correct.";
 
-	std::optional<const char*> get_error_message(const boost::system::error_code& ec) {
-		switch (ec.value()) {
-		case connection_aborted:
-			return connection_aborted_error_message;
-		case server_disconnected:
-			return server_disconnected_error_message;
-		case connection_timed_out:
-			return connection_timed_out_error_message;
-		case connection_refused:
-			return connection_refused_error_message;
-		default:
-			return std::nullopt;
-		}
-	}
+	std::optional<const char*> get_error_message(const boost::system::error_code& ec);
+
+	class error_handler {
+	public:
+		std::optional<std::string> error_message_ = std::nullopt;
+
+		void set_error_message(std::string&& error_message);
+
+		void potentially_display_error_message(const char* error_title, const std::function<void()>& on_close);
+
+	private:
+		std::mutex error_message_mutex;
+
+		void clear_error_message();
+	};
 }

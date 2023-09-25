@@ -1,6 +1,4 @@
 #include "client.hpp"
-#include "errors.hpp"
-#include <string.h>
 
 void message_handler::render_messages() {
 	std::lock_guard<std::mutex> lock(read_messages_mutex_);
@@ -112,6 +110,7 @@ void client::close() {
 		{
 			socket_.close();
 		}
+
 		io_context_->stop();
 		});
 }
@@ -120,28 +119,20 @@ bool client::is_open() {
 	return is_connected_;
 }
 
-void client::clear_error_message() {
-	error_message_.reset();
-}
-
 void client::render_messages() {
 	message_handler_.render_messages();
 }
 
-client client::create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context) {
+client client::create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context, errors::error_handler& error_handler) {
 	char port_str[64];
 	sprintf_s(port_str, "%d", port);
 
 	boost::asio::ip::tcp::resolver resolver(io_context);
 	auto endpoints = resolver.resolve(host, port_str);
 
-	client client(&io_context, std::move(endpoints), username);
+	client client(&io_context, std::move(endpoints), username, error_handler);
 
 	return client;
-}
-
-std::optional<std::string>& client::get_error_message() {
-	return error_message_;
 }
 
 void client::save_new_message(message&& message) {
@@ -181,7 +172,8 @@ void client::handle_error(const boost::system::error_code& ec) {
 	}
 
 	error_message << ". Closing chat." << std::endl;
-	error_message_ = error_message.str();
+
+	error_handler_.set_error_message(error_message.str());
 
 	close();
 }
