@@ -1,4 +1,5 @@
 #include "client.hpp"
+#include "errors.hpp"
 #include <string.h>
 
 void client::do_connect() {
@@ -131,11 +132,23 @@ void client::write_new_message() {
 }
 
 void client::handle_error(const boost::system::error_code& ec) {
-	if (ec.value() != connection_aborted_error) {
-		std::stringstream error_message;
-		error_message << "Encountered error " << ec << ". Closing chat." << std::endl;
-		error_message_ = error_message.str();
+	if (ec.value() == errors::connection_aborted) {
+		close();
+		return;
 	}
+
+	std::stringstream error_message;
+	auto error_message_optional = errors::get_error_message(ec);
+
+	if (error_message_optional.has_value()) {
+		error_message << error_message_optional.value();
+	}
+	else {
+		error_message << "Encountered error " << ec;
+	}
+
+	error_message << ". Closing chat." << std::endl;
+	error_message_ = error_message.str();
 
 	close();
 }

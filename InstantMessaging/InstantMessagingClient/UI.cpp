@@ -117,9 +117,9 @@ int main(int, char**)
                 }
             }
             ImGui::Text("Please choose username:");
-            ImGui::InputText("###Username:", username_buffer, username_buffer_size);
+            bool logged_in_with_enter = ImGui::InputText("###Username:", username_buffer, username_buffer_size, ImGuiInputTextFlags_EnterReturnsTrue);
 
-            if (ImGui::Button("Log in")) {
+            if (ImGui::Button("Log in") || logged_in_with_enter) {
                 if (!is_valid_info(host_name_buffer)) {
                     error_msg = host_error_msg;
                     ImGui::OpenPopup("Log in error.");

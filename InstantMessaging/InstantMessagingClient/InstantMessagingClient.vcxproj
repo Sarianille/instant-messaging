@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="..\message.hpp" />
     <ClInclude Include="client.hpp" />
+    <ClInclude Include="errors.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\imgui\backends\imgui_impl_dx11.cpp" />

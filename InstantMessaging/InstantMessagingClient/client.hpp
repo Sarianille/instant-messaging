@@ -38,7 +38,7 @@ public:
 
 	void clear_error_message();
 
-	client(client&& other) noexcept : socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), read_message_(std::move(other.read_message_)), read_messages_(std::move(other.read_messages_)), write_messages_(std::move(other.write_messages_)), read_messages_old_size_(other.read_messages_old_size_), error_message_(other.error_message_), read_messages_mutex_() {
+	client(client&& other) noexcept : socket_(std::move(other.socket_)), io_context_(other.io_context_), endpoints_(std::move(other.endpoints_)), read_message_(std::move(other.read_message_)), read_messages_(std::move(other.read_messages_)), write_messages_(std::move(other.write_messages_)), read_messages_old_size_(other.read_messages_old_size_), error_message_(other.error_message_), read_messages_mutex_(), is_connected_(other.is_connected_.load()) {
 		strcpy_s(username_, other.username_);
 	}
 
@@ -52,6 +52,7 @@ public:
 		strcpy_s(username_, other.username_);
 		read_messages_old_size_ = other.read_messages_old_size_;
 		error_message_ = other.error_message_;
+		is_connected_.store(other.is_connected_.load());
 		return *this;
 	}
 
@@ -66,7 +67,6 @@ private:
 	std::mutex read_messages_mutex_;
 	int read_messages_old_size_;
 	static constexpr int max_messages = 100;
-	static constexpr int connection_aborted_error = 1236;
 	std::optional<std::string> error_message_ = std::nullopt;
 	std::atomic<bool> is_connected_ = false;
 
