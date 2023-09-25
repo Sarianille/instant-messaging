@@ -87,15 +87,7 @@ void chat_window::open_chat_window(const char host[], int port, const char usern
         io_context = std::move(new_io_context);
 
         client->do_connect();
-        thread = std::thread([&io_context = this->io_context]() { 
-            try {
-                io_context->run();
-            }
-            catch (std::exception& e) {
-                std::cout << e.what();
-                throw;
-            }
-            });
+        thread = std::thread([&io_context = this->io_context]() { io_context->run(); });
     }
     catch (std::exception& e) {
         error_handler.set_error_message(errors::exception_error_msg);
