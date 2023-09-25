@@ -128,7 +128,7 @@ void client::render_messages() {
 	message_handler_.render_messages();
 }
 
-client client::create_client(char host[], int port, char username[], boost::asio::io_context& io_context) {
+client client::create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context) {
 	char port_str[64];
 	sprintf_s(port_str, "%d", port);
 

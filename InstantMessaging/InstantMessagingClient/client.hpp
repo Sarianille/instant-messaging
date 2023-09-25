@@ -80,7 +80,7 @@ public:
 
 	void render_messages();
 
-	static client create_client(char host[], int port, char username[], boost::asio::io_context& io_context);
+	static client create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context);
 
 	std::optional<std::string>& get_error_message();
 
@@ -108,7 +108,7 @@ private:
 	std::optional<std::string> error_message_ = std::nullopt;
 	std::atomic<bool> is_connected_ = false;
 
-	client(boost::asio::io_context* io_context, boost::asio::ip::tcp::resolver::results_type&& endpoints, char username[]) : io_context_(io_context), socket_(*io_context), endpoints_(std::move(endpoints)) {
+	client(boost::asio::io_context* io_context, boost::asio::ip::tcp::resolver::results_type&& endpoints, const char username[]) : io_context_(io_context), socket_(*io_context), endpoints_(std::move(endpoints)) {
 		strcpy_s(username_, username);
 	}
 
