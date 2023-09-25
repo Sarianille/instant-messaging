@@ -198,8 +198,11 @@ int main(int, char**)
                 ImGui::PopItemWidth();
                 ImGui::SameLine();
                 if (ImGui::Button("Send") || message_sent_with_enter) {
-                    client->write(message_buffer);
-                    memset(message_buffer, 0, message_buffer_size * sizeof(char));
+                    if (strlen(message_buffer) != 0)
+                    {
+                        client->write(message_buffer);
+                        memset(message_buffer, 0, message_buffer_size * sizeof(char));
+                    }
                 }
             }
             else {
