@@ -18,6 +18,7 @@ void room::leave(std::shared_ptr<session> user) {
 
 void room::deliver(const message& message, std::optional<std::shared_ptr<session>> sender) {
 	for (auto user : users_) {
+		// The sender already has the message
 		if (user != sender)
 		{
 			user->deliver(message);

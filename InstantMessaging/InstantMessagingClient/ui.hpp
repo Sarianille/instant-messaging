@@ -12,12 +12,27 @@ public:
         memset(username_buffer, 0, username_buffer_size * sizeof(char));
     }
 
+    /// <summary>
+    /// Renders the login window. If the user has logged in, logged_in is set to true.
+    /// </summary>
     void render();
 
+    /// <summary>
+    /// Returns the host name that the user has entered.
+    /// </summary>
+    /// <returns>Host name.</returns>
     const char* get_host_name();
 
+    /// <summary>
+    /// Returns the port number that the user has entered.
+    /// </summary>
+    /// <returns>Port number.</returns>
     int get_port_number();
 
+    /// <summary>
+    /// Returns the username that the user has entered.
+    /// </summary>
+    /// <returns>Username.</returns>
     const char* get_username();
 
 private:
@@ -42,10 +57,22 @@ public:
         memset(message_buffer, 0, message_buffer_size * sizeof(char));
 	}
 
+    /// <summary>
+    /// Renders the chat window and the messages that have been received.
+    /// </summary>
     void render();
 
+    /// <summary>
+    /// Opens a chat window with the given host, port and username.
+    /// </summary>
+    /// <param name="host">Host name.</param>
+    /// <param name="port">Port number.</param>
+    /// <param name="username">Username.</param>
     void open_chat_window(const char host[], int port, const char username[]);
 
+    /// <summary>
+    /// Closes the chat window and disconnects from the server.
+    /// </summary>
     void close_chat_window();
 
 private:
@@ -61,6 +88,9 @@ class ui {
 public:
     ui() : error_handler(), login_window(error_handler), chat_window(error_handler) {}
 
+    /// <summary>
+    /// Renders the UI.
+    /// </summary>
     void render();
 
 private:

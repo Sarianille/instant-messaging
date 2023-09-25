@@ -20,20 +20,40 @@ class message_handler {
 public:
 	message read_message_;
 
+	/// <summary>
+	/// Handles rendering of messages.
+	/// </summary>
 	void render_messages();
 
+	/// <summary>
+	/// Saves a message to be rendered.
+	/// </summary>
+	/// <param name="message">Message to be saved.</param>
 	void save_incoming_message(const message& message);
-
 	void save_incoming_message(message&& message);
 
+	/// <summary>
+	/// Checks if there are any messages to be sent.
+	/// </summary>
+	/// <returns>Whether the queue is empty or not.</returns>
 	bool write_queue_empty();
 
+	/// <summary>
+	/// Enqueues a message to be sent.
+	/// </summary>
+	/// <param name="message">Message to be sent.</param>
 	void enqueue_message_to_be_written(const message& message);
-
 	void enqueue_message_to_be_written(message&& message);
 
+	/// <summary>
+	/// Returns the message to be currently sent.
+	/// </summary>
+	/// <returns>Message to be sent.</returns>
 	message& message_to_be_written();
 
+	/// <summary>
+	/// Pops the recently sent message.
+	/// </summary>
 	void pop_message_to_be_written();
 
 	message_handler(message_handler&& other) noexcept : read_message_(std::move(other.read_message_)), read_messages_mutex_(),
@@ -64,20 +84,52 @@ private:
 
 class client {
 public:
+	/// <summary>
+	/// Asynchronously connects the client to the server and starts receiving messages.
+	/// </summary>
 	void do_connect();
 
+	/// <summary>
+	/// Receives the header of the message asynchonously.
+	/// </summary>
 	void receive_header();
 
+	/// <summary>
+	/// Receives the body of the message asynchronously.
+	/// </summary>
 	void receive_body();
 
+	/// <summary>
+	/// Creates a message from the given content and enqueues it to be sent.
+	/// </summary>
+	/// <param name="content">Message content.</param>
 	void write(char content[]);
 
+	/// <summary>
+	/// Closes the connection to the server.
+	/// </summary>
 	void close();
 
+	/// <summary>
+	/// Checks if the client is connected to the server.
+	/// </summary>
+	/// <returns>Whether the client is connected.</returns>
 	bool is_open();
 
+	/// <summary>
+	/// Handles rendering of messages.
+	/// </summary>
 	void render_messages();
 
+	/// <summary>
+	/// Creates a client with the given parameters.
+	/// </summary>
+	/// <param name="host">Server to which the client connects.</param>
+	/// <param name="port">Port to which the client connects.</param>
+	/// <param name="username">Client's username in the chatroom.</param>
+	/// <param name="io_context">Context in which client's async methods are run in.</param>
+	/// <param name="error_handler">Class used for handling errors.</param>
+	/// <returns>Created client.</returns>
 	static client create_client(const char host[], int port, const char username[], boost::asio::io_context& io_context, errors::error_handler& error_handler);
 
 	client(client&& other) noexcept : username_(), message_handler_(std::move(other.message_handler_)), error_handler_(other.error_handler_), 
