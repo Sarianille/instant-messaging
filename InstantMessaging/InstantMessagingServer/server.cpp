@@ -18,14 +18,22 @@ void room::leave(std::shared_ptr<session> user) {
 
 void room::deliver(const message& message, std::optional<std::shared_ptr<session>> sender) {
 	for (auto user : users_) {
+		// The sender already has the message
 		if (user != sender)
 		{
 			user->deliver(message);
 		}
+		else
+		{
+			std::stringstream new_message = std::stringstream();
+			new_message << "[" << message.header.username << "]: " << message.msg;
+
+			log_event(new_message.str());
+		}
 	}
 }
 
-void room::send_announcement(std::string announcement) {
+void room::send_announcement(const std::string& announcement) {
 	message announcement_message;
 	std::copy(announcement.begin(), announcement.end() + 1, announcement_message.msg);
 	std::copy(name_.begin(), name_.end() + 1, announcement_message.header.username);
